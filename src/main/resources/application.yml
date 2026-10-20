@@ -1,0 +1,78 @@
+# 服务端口
+server:
+  port: 8081
+
+# 数据库配置
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB   # 单个文件最大
+      max-request-size: 10MB
+
+  rabbitmq:
+    host: 127.0.0.1        # RabbitMQ 服务器地址
+    port: 5672             # 默认端口
+    username: guest         # 默认账号
+    password: guest         # 默认密码
+    virtual-host: /         # 虚拟主机，相当于独立命名空间
+    publisher-confirm-type: correlated  # 开启生产者确认：消息是否成功到达Broker
+    publisher-returns: true # 开启返回确认：消息是否成功路由到队列
+    listener:
+      simple:
+        # ========== 核心：手动ACK模式 ==========
+        acknowledge-mode: manual
+        # 消费者每次预取几条消息，防止一次性拉太多压垮数据库
+        prefetch: 1
+        # 重试机制（消费异常时的本地重试，不走MQ重投）
+        retry:
+          enabled: false       # 关闭消费者本地重试
+
+  devtools:
+    restart:
+      enabled: false #关闭自动重启
+    livereload:
+      enabled: false #关闭浏览器自动刷新
+
+  mvc:
+    path-match:
+      matching-strategy: ant_path_matcher
+
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/miaosha?xxx
+    username: ${DB_USER:root}
+    password: ${DB_PWD:xxxx}
+
+  # 2.6.x 版本关闭循环引用报错（后面开发容易遇到，提前加上）
+  main:
+    allow-circular-references: true
+
+  redis:
+    host: 127.0.0.1
+    port:
+    database:
+
+# MyBatis-Plus配置
+mybatis-plus:
+  # mapper xml文件路径
+  mapper-locations: classpath:mapper/*.xml
+  # 实体类扫描包
+  type-aliases-package: org.miaosha.miaosha.entity
+  configuration:
+    # 数据库下划线转java驼峰
+    map-underscore-to-camel-case: true
+    # 控制台打印执行的SQL语句，调试用
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 主键自增策略，对应我们表里面auto自增主键
+      id-type: auto
+      # 逻辑删除字段
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+# 自定义上传路径和访问前缀
+upload:
+  # 【方案A：推荐！保存在项目外部，打包重启图片不会丢】
+  local-path: D:/JavaPrograms/miaosha/miaosha/miaosha-upload/goods/
+  # 访问前缀，接口返回给前端的url前缀
+  access-prefix: /upload/images

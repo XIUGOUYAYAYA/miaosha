@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.miaosha.miaosha.mapper.SeckillGoodsMapper">
+    <!-- 管理员分页VO映射 -->
+    <resultMap id="AdminVOMap" type="org.miaosha.miaosha.common.vo.seckill.goods.SeckillGoodsAdminVO">
+        <id column="id" property="seckillId"/>
+        <result column="goods_name" property="goodsName"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="seckill_price" property="seckillPrice"/>
+        <result column="stock_count" property="stockCount"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 用户分页VO映射 -->
+    <resultMap id="UserVOMap" type="org.miaosha.miaosha.common.vo.seckill.goods.SeckillGoodsUserVO">
+        <!-- 秒杀ID -->
+        <id column="seckill_goods_id" property="seckillGoodsId"/>
+        <!-- 商品名称 -->
+        <result column="goods_name" property="goodsName"/>
+        <!-- 商品图片 -->
+        <result column="goods_img" property="goodsImg"/>
+        <!-- 原价 -->
+        <result column="original_price" property="originalPrice"/>
+        <!-- 秒杀价 -->
+        <result column="seckill_price" property="seckillPrice"/>
+        <!-- 剩余库存 -->
+        <result column="remaining_stock" property="remainingStock"/>
+        <!-- 原始总库存 -->
+        <result column="original_stock" property="originalStock"/>
+        <!-- 秒杀开始时间 -->
+        <result column="start_time" property="startTime"/>
+        <!-- 秒杀结束时间 -->
+        <result column="end_time" property="endTime"/>
+    </resultMap>
+
+    <!-- 管理员后台分页查询 -->
+    <select id="selectAdminPage" resultMap="AdminVOMap">
+        SELECT
+        sg.id,
+        g.goods_name,
+        g.original_price,
+        sg.seckill_price,
+        sg.stock_count,
+        sg.start_time,
+        sg.end_time,
+        sg.status,
+        sg.create_time,
+        sg.update_time
+        FROM seckill_goods sg
+        LEFT JOIN goods g ON sg.goods_id = g.id
+        WHERE sg.is_delete = 0
+        <if test="query.goodsName != null and query.goodsName != ''">
+            AND g.goods_name LIKE CONCAT('%',#{query.goodsName},'%')
+        </if>
+        <if test="query.status != null">
+            AND sg.status = #{query.status}
+        </if>
+        <!-- 修改：按秒杀商品ID升序 -->
+        ORDER BY sg.id ASC
+    </select>
+
+    <!-- 用户前端分页查询 -->
+    <select id="selectUserPage" resultMap="UserVOMap">
+        SELECT
+        g.goods_name,
+        g.goods_img,
+        g.goods_desc,
+        g.original_price,
+        sg.id AS seckill_goods_id,
+        sg.seckill_price,
+        sg.start_time,
+        sg.end_time,
+        ss.remaining_stock,
+        ss.original_stock
+        FROM seckill_goods sg
+        LEFT JOIN goods g ON sg.goods_id = g.id
+        LEFT JOIN seckill_stock ss ON sg.id = ss.seckill_goods_id
+        WHERE sg.is_delete = 0
+        <!-- 用户端只查已发布的秒杀 status=1 -->
+        AND sg.status = 1
+        <!-- 修改：查询未结束活动：结束时间大于当前时间（未开始、进行中都能查到） -->
+        AND sg.end_time &gt; NOW()
+        <if test="query.goodsName != null and query.goodsName != ''">
+            AND g.goods_name LIKE CONCAT('%',#{query.goodsName},'%')
+        </if>
+        <!-- 修改：按秒杀商品ID升序 -->
+        ORDER BY sg.id ASC
+    </select>
+
+
+
+</mapper>
